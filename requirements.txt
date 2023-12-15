@@ -1,0 +1,9 @@
+numpy
+pandas==1.5.3
+matplotlib
+pillow
+opencv-python
+tensorflow
+keras-ocr
+keras
+spacy
