@@ -16,7 +16,7 @@ warnings.filterwarnings('ignore')
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'TRUE'
 
-model_ner = spacy.load('./models/spaCy')
+model_ner = spacy.load('./models/NER/spaCy')
 
 def cleanText(txt):
     whitespace = string.whitespace
