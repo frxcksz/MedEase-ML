@@ -79,90 +79,95 @@ def getPredictions(image):
     text_from_ocr = " ".join([text_result[0] for text_result in ocrData])
     print(text_from_ocr)
 
-    columns = ['image_path', 'text', 'boxes']
-    df = pd.DataFrame(columns=columns)
-
-    print(type(df))
-
-    for text_result in ocrData:
-        text = text_result[0]
-        boxes = text_result[1]
-        
-        df = df.append({'image_path': image, 'text': text, 'boxes': boxes}, ignore_index=True)
-    
-    df.dropna(inplace=True)
-    df['text'] = df['text'].apply(cleanText)
-    df_clean = df[df['text'] != ""]
-
-    doc = model_ner(text_from_ocr)
-    for ent in doc.ents:
-        print(f"Entity: {ent.text}, Label: {ent.label_}")
-
-    docjson = doc.to_json()
-    docjson.keys()
-
-    doc_text = docjson['text']
-
-    dataframe_tokens = pd.DataFrame(docjson['tokens'])
-    dataframe_tokens['token'] = dataframe_tokens[['start', 'end']].apply(lambda x: doc_text[x[0]:x[1]], axis=1)
-
-    right_table = pd.DataFrame(docjson['ents'])[['start', 'label']]
-    dataframe_tokens = pd.merge(dataframe_tokens, right_table, how='left', on='start')
-    dataframe_tokens.fillna('O', inplace=True)
-
-    df_clean['end'] = df_clean['text'].apply(lambda x: len(x) + 1).cumsum() - 1
-    df_clean['start'] = df_clean[['text', 'end']].apply(lambda x: x[1] - len(x[0]), axis=1)
-
-    dataframe_info = pd.merge(df_clean, dataframe_tokens[['start', 'token', 'label']], how='inner', on='start')
-
-    bb_df = dataframe_info.query("label != 'O' ")
-
-    def custom_sort(row):
-        label = row['label']
-        start = row['start']
-        if label.startswith('B-NAME'):
-            return (0, start, label)
-        elif label.startswith('I-NAME'):
-            return (1, start, label)
-        else:
-            return (2, start, label)
-        
-    bb_df['sorting_key'] = bb_df.apply(custom_sort, axis=1)
-    df_sorted = bb_df.sort_values(by='sorting_key').drop('sorting_key', axis=1).reset_index(drop=True)
-
-    df_sorted['label'] = df_sorted['label'].apply(lambda x: x[2:])
-    df_sorted['group'] = df_sorted['label'].apply(grp_gen.getgroup)
-
-    df_sorted[['left', 'top', 'right', 'bottom']] = pd.DataFrame(df_sorted['boxes'].apply(
-        lambda boxes: (int(boxes[0][0]), int(boxes[0][1]), int(boxes[2][0]), int(boxes[2][1]))
-    ).tolist(), index=df_sorted.index)
-
-    col_group = ['left', 'top', 'right', 'bottom', 'label', 'token', 'group']
-    group_tag_img = df_sorted[col_group].groupby(by='group')
-
-    img_tagging = group_tag_img.agg({
-        'left': min,
-        'right': max,
-        'top': min,
-        'bottom': max,
-        'label': lambda x: ', '.join(np.unique(x)),
-        'token': lambda x: " ".join(x)
-    })
-
-    img_bb = img.copy()
-
-    for l, r, t, b, label, token in img_tagging.values:
-        cv2.rectangle(img_bb, (l, t), (r, b), (0, 255, 0), 2)
-        cv2.putText(img_bb, str(label), (l, t), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 2)
-    
-    img_bb = cv2.cvtColor(img_bb, cv2.COLOR_BGR2RGB)
-    
-    info_array = img_tagging[['token', 'label']].values
     entities = dict(NAME=[], ING=[], TYPE=[], DES=[], ORG=[])
 
-    for token, label in info_array:
-        label_tag = label
-        entities[label_tag].append(token)
+    if len(text_from_ocr) > 1:
+        columns = ['image_path', 'text', 'boxes']
+        df = pd.DataFrame(columns=columns)
+
+        print(type(df))
+
+        for text_result in ocrData:
+            text = text_result[0]
+            boxes = text_result[1]
+            
+            df = df.append({'image_path': image, 'text': text, 'boxes': boxes}, ignore_index=True)
+        
+        df.dropna(inplace=True)
+        df['text'] = df['text'].apply(cleanText)
+        df_clean = df[df['text'] != ""]
+
+        doc = model_ner(text_from_ocr)
+        for ent in doc.ents:
+            print(f"Entity: {ent.text}, Label: {ent.label_}")
+
+        docjson = doc.to_json()
+        docjson.keys()
+
+        doc_text = docjson['text']
+
+        dataframe_tokens = pd.DataFrame(docjson['tokens'])
+        dataframe_tokens['token'] = dataframe_tokens[['start', 'end']].apply(lambda x: doc_text[x[0]:x[1]], axis=1)
+
+        right_table = pd.DataFrame(docjson['ents'])[['start', 'label']]
+        dataframe_tokens = pd.merge(dataframe_tokens, right_table, how='left', on='start')
+        dataframe_tokens.fillna('O', inplace=True)
+
+        df_clean['end'] = df_clean['text'].apply(lambda x: len(x) + 1).cumsum() - 1
+        df_clean['start'] = df_clean[['text', 'end']].apply(lambda x: x[1] - len(x[0]), axis=1)
+
+        dataframe_info = pd.merge(df_clean, dataframe_tokens[['start', 'token', 'label']], how='inner', on='start')
+
+        bb_df = dataframe_info.query("label != 'O' ")
+
+        def custom_sort(row):
+            label = row['label']
+            start = row['start']
+            if label.startswith('B-NAME'):
+                return (0, start, label)
+            elif label.startswith('I-NAME'):
+                return (1, start, label)
+            else:
+                return (2, start, label)
+            
+        bb_df['sorting_key'] = bb_df.apply(custom_sort, axis=1)
+        df_sorted = bb_df.sort_values(by='sorting_key').drop('sorting_key', axis=1).reset_index(drop=True)
+
+        df_sorted['label'] = df_sorted['label'].apply(lambda x: x[2:])
+        df_sorted['group'] = df_sorted['label'].apply(grp_gen.getgroup)
+
+        df_sorted[['left', 'top', 'right', 'bottom']] = pd.DataFrame(df_sorted['boxes'].apply(
+            lambda boxes: (int(boxes[0][0]), int(boxes[0][1]), int(boxes[2][0]), int(boxes[2][1]))
+        ).tolist(), index=df_sorted.index)
+
+        col_group = ['left', 'top', 'right', 'bottom', 'label', 'token', 'group']
+        group_tag_img = df_sorted[col_group].groupby(by='group')
+
+        img_tagging = group_tag_img.agg({
+            'left': min,
+            'right': max,
+            'top': min,
+            'bottom': max,
+            'label': lambda x: ', '.join(np.unique(x)),
+            'token': lambda x: " ".join(x)
+        })
+
+        img_bb = img.copy()
+
+        for l, r, t, b, label, token in img_tagging.values:
+            cv2.rectangle(img_bb, (l, t), (r, b), (0, 255, 0), 2)
+            cv2.putText(img_bb, str(label), (l, t), cv2.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 2)
+        
+        img_bb = cv2.cvtColor(img_bb, cv2.COLOR_BGR2RGB)
+        
+        info_array = img_tagging[['token', 'label']].values
+
+        for token, label in info_array:
+            label_tag = label
+            entities[label_tag].append(token)
+    else:
+        img_bb = img
+    
     return img_bb, entities
 
 image_path = './tmp/pred_img.jpg'
