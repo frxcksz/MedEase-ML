@@ -1,4 +1,4 @@
-## MedEase Machine Learning
+## MedEase - Machine Learning
 Here are the machine learning codes, models, and dataset for the MedEase project.
 
 ------------
