@@ -9,7 +9,7 @@ We build a Named-Entity Recognition (NER) model using spaCy to classify the text
 ------------
 
 ### Build With
-- [spaCy](https://spacy.io/models#quickstart)
+- [spaCy](https://spacy.io/models)
 - [keras-ocr](https://keras-ocr.readthedocs.io/en/latest/)
 - [TensorFlow](https://www.tensorflow.org/)
 
