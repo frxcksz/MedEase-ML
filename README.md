@@ -31,7 +31,7 @@ We collected images and medicine informations from data scattered across the int
 #### Run Project in Local
 - [ ] Clone this Github [repository](https://github.com/frxcksz/MedEase-ML.git)
 - [ ] Go to the project directory `cd MedEase-ML`
-- [ ] Install the requirements `pip install requirements.txt`
+- [ ] Install the requirements `pip install MedEase-ML/requirements.txt`
 - [ ] Put the image into the `MedEase-ML/tmp` directory
 - [ ] Run python predictions.py
 - [ ] The result of the image with bounding box will be displayed and you can see the JSON result in the `MedEase/result` directory
