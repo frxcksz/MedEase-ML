@@ -6,6 +6,8 @@ Here are the machine learning codes, models, and dataset for the MedEase project
 ### Overview
 We build a Named-Entity Recognition (NER) model using spaCy to classify the text obtained from the Optical Character Recognition (OCR) model using keras-ocr, pre-processing the data using TensorFlow, labeling the data using BIO Tagging, and post-processing the data using pandas and OpenCV. Also, providing JSON output for further processing or use.
 
+![result](https://github.com/frxcksz/MedEase-ML/assets/92621696/abd22f0c-865a-4f7f-abe5-cff8310045d0)
+
 ------------
 
 ### Build With
